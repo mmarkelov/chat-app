@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { ApolloError, useMutation } from "@apollo/client";
+import { CHANNELS, USERS } from "./const";
+import { User, Channel } from "./types";
+import { POST_MESSAGE } from "./mutations";
 import Header from "./components/Header";
 import UserSelector from "./components/UserSelector";
 import ChannelSelector from "./components/ChannelSelector";
-import Message from "./components/Message";
-import { CHANNELS, USERS } from "./const";
-import { User, Channel } from "./types";
+import MessageList from "./components/MessageList";
+import { GET_LATEST_MESSAGES } from "./queries";
 
 const Container = styled.div`
   margin-left: 5%;
@@ -41,6 +44,12 @@ const ChannelTitle = styled.div`
   border-bottom: 1px solid #e6ecf3;
 `;
 
+const CurrentTime = styled.div`
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+`;
+
 const TextAreaWrapper = styled.div`
   margin-left: 1rem;
   margin-right: 1rem;
@@ -59,21 +68,44 @@ const Textarea = styled.textarea`
 
 const Button = styled.button`
   color: #fff;
-  background-color: #17a2b8;
-  border: 1px solid #17a2b8;
+  background-color: ${({ disabled }) => (disabled ? "#cccccc" : "#17a2b8")};
+  border: 1px solid;
+  border-color: ${({ disabled }) => (disabled ? "#cccccc" : "#17a2b8")};
   border-radius: 0.25rem;
   padding: 0.375rem 0.75rem;
   float: right;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 `;
 
 function App() {
   const [user, setUser] = useState<User>(USERS[0]);
   const [channel, setChannel] = useState<Channel>(CHANNELS[0].value);
   const [text, setText] = useState("");
+  const [error, setError] = useState(false);
+
+  const [postMessage, { loading }] = useMutation(POST_MESSAGE, {
+    onError: () => {
+      setError(true);
+    },
+    refetchQueries: [
+      {
+        query: GET_LATEST_MESSAGES,
+        variables: {
+          channelId: channel,
+        },
+      },
+    ],
+  });
 
   const handleTextInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
+  };
+
+  const handleSubmit = () => {
+    postMessage({
+      variables: { channelId: channel, text, userId: user },
+    });
+    setText("");
   };
 
   const channelTitle = `${
@@ -96,30 +128,8 @@ function App() {
         </SelectorsWrapper>
         <ChatWrapper>
           <ChannelTitle>{channelTitle}</ChannelTitle>
-          <Message
-            userName={USERS[0]}
-            text="Hello, I'm Russell."
-            time="08:55"
-            status="ok"
-          />
-          <Message
-            userName={USERS[1]}
-            text="I need more information about Developer Plan."
-            time="08:55"
-          />
-          <Message
-            userName={USERS[2]}
-            text={"Line one\nLine two\nLine three"}
-            time="08:55"
-            status="err"
-          />
-          <Message
-            userName={USERS[0]}
-            text="I need more information about Developer Plan."
-            time="08:55"
-            right
-            status="ok"
-          />
+          <CurrentTime>{new Date().toLocaleDateString()}</CurrentTime>
+          <MessageList channelId={channel} currentUser={user} />
           <TextAreaWrapper>
             <Textarea
               value={text}
@@ -127,8 +137,15 @@ function App() {
               placeholder="Type your message here..."
               rows={3}
             />
-            <Button>
-              Send Message <i className="fa fa-send fa-paper-plane" />
+            {error && <div>Error!</div>}
+            <Button disabled={loading || !text} onClick={handleSubmit}>
+              {loading ? (
+                <i className="fas fa-spinner fa-pulse" />
+              ) : (
+                <>
+                  Send Message <i className="fa fa-send fa-paper-plane" />
+                </>
+              )}
             </Button>
           </TextAreaWrapper>
         </ChatWrapper>

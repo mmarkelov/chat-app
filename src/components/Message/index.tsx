@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { API } from "../../const";
-import { User } from "../../types";
+import { MessageItem } from "../../types";
 
 const AVATAR_SIZE = 48;
 
@@ -44,7 +44,6 @@ const Text = styled.div<{ right?: boolean }>`
     right: ${({ right }) => (right ? "-20px" : "inherit")};
     left: ${({ right }) => (!right ? "-20px" : "inherit")};
     border: 10px solid;
-
     border-color: ${({ right }) =>
       right
         ? "transparent transparent transparent #ffffff;"
@@ -59,42 +58,31 @@ const Time = styled.div`
   align-self: center;
 `;
 
-const StatusIcon = styled.span<{ status: Status; right?: boolean }>`
+const CheckIcon = styled.span<{ right?: boolean }>`
   bottom: -4px;
   right: ${({ right }) => (!right ? "-8px" : "inherit")};
   left: ${({ right }) => (right ? "-8px" : "inherit")};
-  color: ${({ status }) => (status === "ok" ? "#9ec94a" : "#b71e3c")};
+  color: #9ec94a;
   position: absolute;
 `;
 
-type Status = "ok" | "err";
-
-type Props = {
-  userName: User;
-  text: string;
-  time: string;
+type Props = MessageItem & {
   right?: boolean;
-  status?: Status;
 };
 
-const Message = ({ userName, text, time, right, status }: Props) => {
+const Message = ({ userId, text, datetime, right }: Props) => {
+  const dateObj = new Date(datetime);
+  const time = `${dateObj.getHours()}:${dateObj.getMinutes()}`;
+
   return (
     <MessageWrapper right={right}>
       <AvatarWrapper>
-        <AvatarImg src={`${API}/${userName}.png`} />
-        <UserName>{userName}</UserName>
+        <AvatarImg src={`${API}/${userId}.png`} />
+        <UserName>{userId}</UserName>
       </AvatarWrapper>
       <Text right={right}>
         {text}
-        {status && (
-          <StatusIcon
-            className={`fa fa-${
-              status === "ok" ? "check" : "exclamation"
-            }-circle`}
-            status={status}
-            right={right}
-          />
-        )}
+        <CheckIcon className="fa fa-check-circle" right={right} />
       </Text>
       <Time>{time}</Time>
     </MessageWrapper>

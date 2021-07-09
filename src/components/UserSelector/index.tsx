@@ -23,11 +23,9 @@ const UserSelector = ({ currentUser, setUser }: Props) => {
     setUser(e.target.value as User);
   };
   return (
-    <Select onChange={handleChange}>
+    <Select value={currentUser} onChange={handleChange}>
       {USERS.map((user) => (
-        <Option key={user} selected={user === currentUser}>
-          {user}
-        </Option>
+        <Option key={user}>{user}</Option>
       ))}
     </Select>
   );
