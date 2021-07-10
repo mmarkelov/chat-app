@@ -4,7 +4,11 @@ import { MessageItem } from "../../types";
 
 const AVATAR_SIZE = 48;
 
-const MessageWrapper = styled.div<{ right?: boolean }>`
+type Right = {
+  right?: boolean;
+};
+
+const MessageWrapper = styled.div<Right>`
   display: flex;
   margin: 1rem;
   flex-direction: ${({ right }) => (right ? "row-reverse" : "row")};
@@ -28,7 +32,7 @@ const UserName = styled.b`
   color: #999999;
 `;
 
-const Text = styled.div<{ right?: boolean }>`
+const Text = styled.div<Right>`
   position: relative;
   padding: 0.4rem 1rem;
   border-radius: 4px;
@@ -58,7 +62,7 @@ const Time = styled.div`
   align-self: center;
 `;
 
-const CheckIcon = styled.span<{ right?: boolean }>`
+const CheckIcon = styled.span<Right>`
   bottom: -4px;
   right: ${({ right }) => (!right ? "-8px" : "inherit")};
   left: ${({ right }) => (right ? "-8px" : "inherit")};
@@ -66,9 +70,7 @@ const CheckIcon = styled.span<{ right?: boolean }>`
   position: absolute;
 `;
 
-type Props = MessageItem & {
-  right?: boolean;
-};
+type Props = MessageItem & Right;
 
 const Message = ({ userId, text, datetime, right }: Props) => {
   const dateObj = new Date(datetime);
@@ -80,7 +82,7 @@ const Message = ({ userId, text, datetime, right }: Props) => {
   return (
     <MessageWrapper right={right}>
       <AvatarWrapper>
-        <AvatarImg src={`${API}/${userId}.png`} />
+        <AvatarImg src={`${API}/${userId}.png`} alt={`preview-${userId}`} />
         <UserName>{userId}</UserName>
       </AvatarWrapper>
       <Text right={right}>

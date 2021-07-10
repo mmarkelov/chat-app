@@ -16,16 +16,18 @@ const Select = styled.select`
   border-radius: 0.25rem;
 `;
 
-const Option = styled.option``;
-
 const UserSelector = ({ currentUser, setUser }: Props) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setUser(e.target.value as User);
   };
   return (
-    <Select value={currentUser} onChange={handleChange}>
+    <Select
+      value={currentUser}
+      placeholder="Select user"
+      onChange={handleChange}
+    >
       {USERS.map((user) => (
-        <Option key={user}>{user}</Option>
+        <option key={user}>{user}</option>
       ))}
     </Select>
   );
