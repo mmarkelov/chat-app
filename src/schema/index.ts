@@ -10,6 +10,11 @@ const typeDefs = gql`
 
   type Query {
     fetchLatestMessages(channelId: String!): [Message]
+    fetchMoreMessages(
+      channelId: String!
+      messageId: String!
+      old: Boolean!
+    ): [Message]
   }
 
   type Mutation {

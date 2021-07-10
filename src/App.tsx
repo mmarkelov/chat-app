@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { ApolloError, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { CHANNELS, USERS } from "./const";
 import { User, Channel } from "./types";
 import { POST_MESSAGE } from "./mutations";
@@ -8,6 +8,7 @@ import Header from "./components/Header";
 import UserSelector from "./components/UserSelector";
 import ChannelSelector from "./components/ChannelSelector";
 import MessageList from "./components/MessageList";
+import Button from "./components/Button";
 import { GET_LATEST_MESSAGES } from "./queries";
 
 const Container = styled.div`
@@ -19,6 +20,7 @@ const Content = styled.div`
   display: flex;
   background-color: rgb(244, 245, 251);
   padding-bottom: 1rem;
+  max-height: 100vh;
 `;
 
 const SelectorsWrapper = styled.div`
@@ -29,6 +31,7 @@ const SelectorsWrapper = styled.div`
 
 const ChatWrapper = styled.div`
   flex: 2;
+  overflow-y: scroll;
 `;
 
 const SelectorItem = styled.div`
@@ -66,27 +69,58 @@ const Textarea = styled.textarea`
   margin-bottom: 1rem;
 `;
 
-const Button = styled.button`
-  color: #fff;
-  background-color: ${({ disabled }) => (disabled ? "#cccccc" : "#17a2b8")};
-  border: 1px solid;
-  border-color: ${({ disabled }) => (disabled ? "#cccccc" : "#17a2b8")};
-  border-radius: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  float: right;
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+const ErrorWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #b71e3c;
+  margin-bottom: 1rem;
 `;
+
+const ErrorText = styled.div`
+  margin-left: 1rem;
+`;
+
+const TEXT_ITEM = "TEXT_ITEM";
 
 function App() {
   const [user, setUser] = useState<User>(USERS[0]);
   const [channel, setChannel] = useState<Channel>(CHANNELS[0].value);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(localStorage.getItem(TEXT_ITEM) || "");
   const [error, setError] = useState(false);
 
+  const handleSubmit = () => {
+    setError(false);
+    postMessage({
+      variables: { channelId: channel, text, userId: user },
+    });
+  };
+
+  const keydownHandler = (e: KeyboardEvent) => {
+    if (e.keyCode === 13 && e.ctrlKey) {
+      handleSubmit();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("keydown", keydownHandler);
+    window.onbeforeunload = () => {
+      localStorage.setItem(TEXT_ITEM, text);
+    };
+    return () => {
+      document.removeEventListener("keydown", keydownHandler);
+    };
+  }, [keydownHandler]);
+
+  const onError = () => {
+    setError(true);
+  };
+
+  const onCompleted = () => {
+    setText("");
+  };
+
   const [postMessage, { loading }] = useMutation(POST_MESSAGE, {
-    onError: () => {
-      setError(true);
-    },
     refetchQueries: [
       {
         query: GET_LATEST_MESSAGES,
@@ -95,22 +129,18 @@ function App() {
         },
       },
     ],
+    onError,
+    onCompleted,
   });
 
   const handleTextInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
   };
 
-  const handleSubmit = () => {
-    postMessage({
-      variables: { channelId: channel, text, userId: user },
-    });
-    setText("");
-  };
-
-  const channelTitle = `${
-    CHANNELS.find(({ value }) => value === channel)?.title
-  } Channel`;
+  const channelTitle = useMemo(
+    () => `${CHANNELS.find(({ value }) => value === channel)?.title} Channel`,
+    [channel]
+  );
 
   return (
     <Container>
@@ -137,7 +167,15 @@ function App() {
               placeholder="Type your message here..."
               rows={3}
             />
-            {error && <div>Error!</div>}
+            {error && (
+              <ErrorWrapper>
+                <i className="fa fa-exclamation-circle" />
+                <ErrorText>
+                  Sorry! We couldn't send your message because of unexpected
+                  error. Please try again!
+                </ErrorText>
+              </ErrorWrapper>
+            )}
             <Button disabled={loading || !text} onClick={handleSubmit}>
               {loading ? (
                 <i className="fas fa-spinner fa-pulse" />

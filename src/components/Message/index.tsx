@@ -72,7 +72,10 @@ type Props = MessageItem & {
 
 const Message = ({ userId, text, datetime, right }: Props) => {
   const dateObj = new Date(datetime);
-  const time = `${dateObj.getHours()}:${dateObj.getMinutes()}`;
+  const time = `${dateObj.getHours()}:${String(dateObj.getMinutes()).padStart(
+    2,
+    "0"
+  )}`;
 
   return (
     <MessageWrapper right={right}>

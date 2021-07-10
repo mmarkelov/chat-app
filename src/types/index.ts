@@ -20,10 +20,21 @@ type GetLatestMessagesVars = {
   channelId: string;
 };
 
+type GetMessages = {
+  fetchMoreMessages: MessageItem[];
+};
+
+type GetMessagesVars = GetLatestMessagesVars & {
+  messageId: string;
+  old: boolean;
+};
+
 export type {
   User,
   Channel,
   MessageItem,
   GetLatestMessages,
   GetLatestMessagesVars,
+  GetMessages,
+  GetMessagesVars,
 };
